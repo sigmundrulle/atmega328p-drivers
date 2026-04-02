@@ -20,7 +20,6 @@ typedef void (*timer_callback)(void)
 
 timer_t* timer_new(uint32_t timeout_ms, timer_callback callback)
 {
-    hejhejehj
 }
 
 void timer_delete(timer_t** self)
