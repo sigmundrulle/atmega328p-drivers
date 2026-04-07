@@ -81,7 +81,10 @@ void timer_delete(timer_t** self)
     if (NULL == timer) { return; }
 
     // Reset/clear used hardware.
-    
+    timer->is_enabled = false;
+
+    // Clear the instance from the array of instances.
+    instances[timer->id] = NULL; 
 
     // Release the pin from the pin registry.
     CLEAR(timer_reg, timer->id);
