@@ -1,5 +1,5 @@
 # **P01** - Timer-driver i C
-
+# TEST LAPTOP
 ## Syfte
 Ni ska i grupper om 1-2 implementera en timer-driver i C i form av en opaque struct med callback:
 * Drivern ska kunna skapa 1–3 timers (begränsat av hårdvaran i labbmiljön).
