@@ -101,7 +101,7 @@ void timer_delete(timer_t** self)
 bool timer_is_enabled(const timer_t* self)
 {
     // Return false if the timer instance is invalid, otherwise return the timer's enabled state.
-    if (NULL == self) { return true; }
+    if (NULL == self) { return false; }
     return self->is_enabled;
 }
 
