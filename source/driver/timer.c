@@ -31,6 +31,9 @@ typedef struct timer
     timer_callback callback;
 } timer_t;
 
+/** Timer callback. */
+typedef void (*timer_callback)(void);
+
 // -----------------------------------------------------------------------------
 timer_t* timer_new(uint32_t timeout_ms, timer_callback callback)
 {
@@ -105,26 +108,54 @@ bool timer_is_enabled(const timer_t* self)
 // -----------------------------------------------------------------------------
 void timer_start(timer_t* self)
 {
+    // If the timer instance is invalid or already enabled, terminate the function.
+    if (NULL == self || self->is_enabled) { return; }
+
+    // Start the timer by setting the enabled state to true.
+    self->is_enabled = true;
 }
 
 // -----------------------------------------------------------------------------
 void timer_stop(timer_t* self)
 {
+    // If the timer instance is invalid or already disabled, terminate the function.
+    if (NULL == self || !self->is_enabled) { return; }
+
+    // Stop the timer by setting the enabled state to false.
+    self->is_enabled = false;
 }
 
 // -----------------------------------------------------------------------------
 void timer_toggle(timer_t* self)
 {
+    // If the timer instance is invalid, terminate the function.
+    if (NULL == self) { return; }
+
+    // Toggle the timer's state
+    self->is_enabled = !self->is_enabled;
 }
 
 // -----------------------------------------------------------------------------
 void timer_restart(timer_t* self)
 {
+    // If the timer instance is invalid, terminate the function.
+    if (NULL == self) { return; }
+
+    // Reset the counter and restart the timer.
+    self->elapsed_ms = 0U;
+    self->is_enabled = true;
 }
 
 // -----------------------------------------------------------------------------
 void timer_reset(timer_t* self)
 {
+    // If the timer instance is invalid, terminate the function.
+    if (NULL == self) { return; }
+
+    // Stop the timer and reset the counter.
+    self->is_enabled = false;
+    self->elapsed_ms = 0U;
+
 }
 
 // -----------------------------------------------------------------------------
@@ -138,4 +169,10 @@ uint32_t timer_timeout_ms(const timer_t* self)
 // -----------------------------------------------------------------------------
 void timer_set_timeout_ms(timer_t* self, uint32_t timeout_ms)
 {
+    // If the timer instance is invalid or new timeout is invalid, terminate the function.
+    if (NULL == self || 0U == timeout_ms) { return; }
+
+    // Set new timeout and reset counter.
+    self->timeout_ms = timeout_ms;
+    self->elapsed_ms = 0U;
 }
