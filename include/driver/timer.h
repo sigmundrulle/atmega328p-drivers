@@ -9,6 +9,11 @@
  */
 typedef struct timer timer_t;
 
+/**
+ * @brief Timer callback function type.
+ */
+typedef void (*timer_callback)(void);
+
 /** 
  * @brief Create a new timer instance.
  * 

@@ -24,15 +24,40 @@ typedef struct timer
     /** Timer is enabled = true, disabled = false */
     bool is_enabled;
 
-    // Id, 0,1 or 2, for timer0, timer1 or timer2 respectively.
+    /** Id, 0,1 or 2, for timer0, timer1 or timer2 respectively */
     uint8_t id;
 
     /** Callback function to be called when timer expires */
     timer_callback callback;
 } timer_t;
 
-/** Timer callback. */
-typedef void (*timer_callback)(void);
+static void timer_init_attributes(timer_t* self, const uint8_t id)
+{
+    self->id = id;
+
+    if (0U == id)
+    {
+        TCCR0A  = (1 << WGM01);
+        TCCR0B  = (1 << CS01) | (1 << CS00);
+        OCR0A   = 249;
+        TIMSK0 |= (1 << OCIE0A);
+    }
+    else if (1U == id)
+    {
+        TCCR1A  = 0U;
+        TCCR1B  = (1 << WGM12) | (1 << CS11) | (1 << CS10);
+        OCR1A   = 249;
+        TIMSK1 |= (1 << OCIE1A);
+    }
+    else if (2U == id)
+    {
+        TCCR2A  = (1 << WGM21);
+        TCCR2B  = (1 << CS22);
+        OCR2A   = 249;
+        TIMSK2 |= (1 << OCIE2A); 
+    }
+    sei();
+}
 
 // -----------------------------------------------------------------------------
 timer_t* timer_new(uint32_t timeout_ms, timer_callback callback)
@@ -68,7 +93,9 @@ timer_t* timer_new(uint32_t timeout_ms, timer_callback callback)
     instances[timer_id] = self; 
 
     // Mark the timer as used in the registry
-    SET(timer_reg, timer_id); 
+    SET(timer_reg, timer_id);
+
+    timer_init_attributes(self, (uint8_t)timer_id);
 
     return self;
 }
@@ -85,6 +112,10 @@ void timer_delete(timer_t** self)
 
     // Reset/clear used hardware.
     timer->is_enabled = false;
+
+    if (timer->id == 0)      { TIMSK0 &= ~(1 << OCIE0A); }
+    else if (timer->id == 1) { TIMSK1 &= ~(1 << OCIE1A); }
+    else if (timer->id == 2) { TIMSK2 &= ~(1 << OCIE2A); }
 
     // Clear the instance from the array of instances.
     instances[timer->id] = NULL; 
@@ -176,3 +207,21 @@ void timer_set_timeout_ms(timer_t* self, uint32_t timeout_ms)
     self->timeout_ms = timeout_ms;
     self->elapsed_ms = 0U;
 }
+
+static void timer_tick(uint8_t id)
+{
+    timer_t* t = instances[id];
+    if (NULL != t && t->is_enabled)
+    {
+        t->elapsed_ms++;
+        if (t->elapsed_ms >= t->timeout_ms)
+        {
+            t->elapsed_ms = 0U;
+            if (NULL != t->callback) { t->callback(); }
+        }
+    }
+}
+
+ISR(TIMER0_COMPA_vect) { timer_tick(0); }
+ISR(TIMER1_COMPA_vect) { timer_tick(1); }
+ISR(TIMER2_COMPA_vect) { timer_tick(2); }
