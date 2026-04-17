@@ -9,8 +9,11 @@
 #include "driver/timer.h"
 #include "driver/utils.h"
 
-static uint8_t timer_reg = 0U; // Timer registry
-static timer_t* instances[3] = {NULL, NULL, NULL}; // Array of timer instances (for timer interrupt handlers)
+/** Timer registry */
+static uint8_t timer_reg = 0U; 
+
+/** Array of timer instances */
+static timer_t* instances[3] = {NULL, NULL, NULL};
 
 // -----------------------------------------------------------------------------
 typedef struct timer
@@ -35,6 +38,7 @@ static void timer_init_attributes(timer_t* self, const uint8_t id)
 {
     self->id = id;
 
+    // Activate timers based on ID
     if (0U == id)
     {
         TCCR0A  = (1 << WGM01);
@@ -56,6 +60,8 @@ static void timer_init_attributes(timer_t* self, const uint8_t id)
         OCR2A   = 249;
         TIMSK2 |= (1 << OCIE2A); 
     }
+
+    // Active interrupts
     sei();
 }
 
@@ -95,6 +101,7 @@ timer_t* timer_new(uint32_t timeout_ms, timer_callback callback)
     // Mark the timer as used in the registry
     SET(timer_reg, timer_id);
 
+    // Initiate timer
     timer_init_attributes(self, (uint8_t)timer_id);
 
     return self;
@@ -208,15 +215,24 @@ void timer_set_timeout_ms(timer_t* self, uint32_t timeout_ms)
     self->elapsed_ms = 0U;
 }
 
+// ------------------------------------------------------------------------------
 static void timer_tick(uint8_t id)
 {
+    // Retrieve the timer instance from the array.
     timer_t* t = instances[id];
+
+    // Proceed if the timer exists and is enabled.
     if (NULL != t && t->is_enabled)
     {
         t->elapsed_ms++;
+
+        // Check if the timer as reached timeout
         if (t->elapsed_ms >= t->timeout_ms)
         {
+            // Reset elapsed time
             t->elapsed_ms = 0U;
+
+            // Execute callback
             if (NULL != t->callback) { t->callback(); }
         }
     }

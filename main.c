@@ -1,27 +1,23 @@
-/**
- * @brief Application logic for Timer-driven LED and Button Debounce.
- */
 #include <stddef.h>
-#include <avr/interrupt.h> // För sei()
+#include <avr/interrupt.h>
 
 #include "driver/gpio.h"
 #include "driver/timer.h"
 
-/* --- Konfiguration --- */
-#define LED_PIN 8U          // LED enligt instruktion
-#define BUTTON_PIN 13U      // Knapp enligt instruktion
-#define BLINK_INTERVAL 100U // 100ms blink
-#define DEBOUNCE_TIME 300U  // 300ms debounce (VG-krav)
+/** Configuration */
+#define LED_PIN 8U
+#define BUTTON_PIN 13U
+#define BLINK_INTERVAL 100U
+#define DEBOUNCE_TIME 300U
 
-/* --- Globala instanser --- */
-static gpio_t *led    = NULL;
-static gpio_t *button = NULL;
+static gpio_t *led             = NULL;
+static gpio_t *button          = NULL;
 static timer_t *blink_timer    = NULL;
 static timer_t *debounce_timer = NULL;
 
 /**
- * @brief Timer Callback: Togglar lysdioden.
- * Enligt krav: Kontrollerar att timern faktiskt är enabled innan toggle.
+ * @brief Callback for the LED blink timer.
+ * Toggles the LED state if the blink timer is currently enabled.
  */
 static void led_callback(void)
 {
@@ -32,65 +28,62 @@ static void led_callback(void)
 }
 
 /**
- * @brief Debounce Callback (VG-krav):
- * Körs 300ms efter ett knapptryck för att återaktivera interrupts.
+ * @brief Callback for the debounce timer.
+ * Re-enables the button interrupt after the debounce period has passed.
  */
 static void debounce_callback(void)
 {
     timer_stop(debounce_timer);
-    gpio_enable_pci(button); // Återaktivera interrupt för knappen
+    gpio_enable_pci(button);
 }
 
 /**
- * @brief Button Callback:
- * Togglar blink-timern och hanterar debounce-låsning.
+ * @brief Button event handler (ISR callback).
+ * Toggles the blinking logic and handles software debouncing by 
+ * temporarily disabling interrupts.
  */
 static void button_event(void)
 {
-    // Läs av knappen (Low = Press pga Pullup)
+    // Check if the button is pressed (active low)
     if (!gpio_read(button))
     {
-        // 1. Inaktivera interrupt på porten (VG-krav)
-        // OBS: Detta förutsätter att gpio_disable_pci finns i din driver, 
-        // annars kan man manuellt rensa biten i PCICR.
+        // Disable Pin Change Interrupts to prevent bouncing
         PCICR &= ~(1 << PCIE0); 
 
-        // 2. Toggle blink-timern
+        // Toggle the state of the blink timer
         timer_toggle(blink_timer);
 
-        // 3. Om timern stängdes av -> Släck LED direkt (Krav)
+        // Ensure LED is turned off immediately if blinking is stopped
         if (!timer_is_enabled(blink_timer))
         {
             gpio_write(led, 0U);
         }
 
-        // 4. Starta debounce-timern för att låsa upp om 300ms
+        // Start the debounce timer to unlock interrupts after 300ms
         timer_restart(debounce_timer);
     }
 }
 
 int main(void)
 {
-    // 1. Initiera hårdvara (GPIO)
+    /** Initialize GPIO Hardware */
     led    = gpio_new(LED_PIN, GPIO_DIRECTION_OUTPUT, NULL);
     button = gpio_new(BUTTON_PIN, GPIO_DIRECTION_INPUT_PULLUP, button_event);
 
-    // 2. Skapa timers
-    // Timer för att blinka LED var 100:e ms
+    // Timer for LED blinking
     blink_timer = timer_new(BLINK_INTERVAL, led_callback);
     
-    // Timer för debounce (VG-krav)
+    // Timer for handling button debounce
     debounce_timer = timer_new(DEBOUNCE_TIME, debounce_callback);
 
-    // 3. Aktivera knapp-interrupt
+    /** Enable System Interrupts */
     gpio_enable_pci(button);
     
-    // Aktivera globala avbrott (viktigt för att timers ska gå)
+    // Enable global interrupts
     sei();
 
     while (1)
     {
-        // Main loopen är tom, allt sköts via callbacks (interrupt-driven)
     }
 
     return 0;
