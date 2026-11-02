@@ -73,7 +73,10 @@ void gpio_toggle(gpio_t* self);
 
 /**
  * @brief Enable pin change interrupt for the given GPIO.
- * 
+ *
+ *        Any pending interrupt flag for the I/O port is cleared first, so pin
+ *        changes that occurred while interrupts were disabled are ignored.
+ *
  * @param[in, out] self Pointer to the GPIO.
  */
 void gpio_enable_pci(gpio_t* self);

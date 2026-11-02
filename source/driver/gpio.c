@@ -24,7 +24,7 @@
 /** Pin offset for I/O port D. */
 #define PIN_OFFSET_D 0U
 
-/** Number of avilable ports. */
+/** Number of available ports. */
 #define PORT_COUNT 3U
 
 /** Port offset for I/O port B. */
@@ -222,7 +222,7 @@ void gpio_delete(gpio_t** self)
 // -----------------------------------------------------------------------------
 void gpio_write(gpio_t* self, const bool state)
 {
-    // Terminate the function is the GPIO is invalid.
+    // Terminate the function if the GPIO is invalid.
     if (NULL == self) { return; }
 
     // Check data direction, terminate the function if not configured as output.
@@ -243,7 +243,7 @@ bool gpio_read(const gpio_t* self)
 // -----------------------------------------------------------------------------
 void gpio_toggle(gpio_t* self)
 {
-    // Terminate the function is the GPIO is invalid.
+    // Terminate the function if the GPIO is invalid.
     if (NULL == self) { return; }
 
     // Check data direction, terminate the function if not configured as output.
@@ -256,8 +256,13 @@ void gpio_toggle(gpio_t* self)
 // -----------------------------------------------------------------------------
 void gpio_enable_pci(gpio_t* self)
 {
-    // Terminate the function is the GPIO is invalid.
+    // Terminate the function if the GPIO is invalid.
     if (NULL == self) { return; }
+
+    // Clear any pending interrupt flag for the port (writing 1 clears it), so that
+    // pin changes that occurred while interrupts were disabled don't fire immediately.
+    // PCIFx uses the same bit position as PCIEx.
+    PCIFR = (1U << self->pcicx);
 
     // Enable interrupts on the associated I/O-port.
     SET(PCICR, self->pcicx);
@@ -272,7 +277,7 @@ void gpio_enable_pci(gpio_t* self)
 // -----------------------------------------------------------------------------
 void gpio_disable_pci(gpio_t* self, bool disable_port)
 {
-    // Terminate the function is the GPIO is invalid.
+    // Terminate the function if the GPIO is invalid.
     if (NULL == self) { return; }
 
     // Disable interrupts on the pin.

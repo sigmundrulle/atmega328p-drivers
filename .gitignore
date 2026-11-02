@@ -1,0 +1,16 @@
+# Microchip/Atmel Studio user settings
+.vs/
+*.atsuo
+*.componentinfo.xml
+
+# Build output
+Debug/
+Release/
+*.o
+*.d
+*.elf
+*.hex
+*.eep
+*.lss
+*.map
+*.srec

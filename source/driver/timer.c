@@ -110,10 +110,10 @@ timer_t* timer_new(uint32_t timeout_ms, timer_callback callback)
 // -----------------------------------------------------------------------------
 void timer_delete(timer_t** self)
 {
-    // Check the GPIO instance, terminate the function if invalid.
+    // Check the timer reference, terminate the function if invalid.
     if (NULL == self) { return; }
 
-    // Retrieve the GPIO implementation, terminate the function if invalid.
+    // Retrieve the timer instance, terminate the function if invalid.
     timer_t* timer = *self;
     if (NULL == timer) { return; }
 
@@ -127,7 +127,7 @@ void timer_delete(timer_t** self)
     // Clear the instance from the array of instances.
     instances[timer->id] = NULL; 
 
-    // Release the pin from the pin registry.
+    // Release the hardware timer from the timer registry.
     CLEAR(timer_reg, timer->id);
 
     // Free allocated memory and set the associated pointer to NULL.
@@ -226,7 +226,7 @@ static void timer_tick(uint8_t id)
     {
         t->elapsed_ms++;
 
-        // Check if the timer as reached timeout
+        // Check if the timer has reached timeout
         if (t->elapsed_ms >= t->timeout_ms)
         {
             // Reset elapsed time

@@ -47,8 +47,8 @@ static void button_event(void)
     // Check if the button is pressed (active low)
     if (!gpio_read(button))
     {
-        // Disable Pin Change Interrupts to prevent bouncing
-        PCICR &= ~(1 << PCIE0); 
+        // Disable pin change interrupts on the button's I/O port to prevent bouncing
+        gpio_disable_pci(button, true);
 
         // Toggle the state of the blink timer
         timer_toggle(blink_timer);
