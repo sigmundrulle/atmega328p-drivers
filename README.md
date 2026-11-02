@@ -1,5 +1,7 @@
 # GPIO & Timer Drivers for ATmega328P
 
+[![Build](https://github.com/sigmundrulle/gpio-timerdriver/actions/workflows/build.yml/badge.svg)](https://github.com/sigmundrulle/gpio-timerdriver/actions/workflows/build.yml)
+
 Bare-metal C drivers for the ATmega328P (Arduino Uno), written without the Arduino libraries – just registers, interrupts and a small object-style API.
 
 The demo application blinks an LED every 100 ms and lets a push button start/stop the blinking, with a software debounce timer to filter out contact bounce.
@@ -72,11 +74,22 @@ int main(void)
 include/driver/   Public headers (gpio.h, timer.h, utils.h)
 source/driver/    Driver implementations
 main.c            Demo application (LED + button + debounce)
+Makefile          avr-gcc build
 ```
 
 ## Building
 
-Open `gpio_struct.atsln` in Microchip Studio (Atmel Studio 7), build, and flash to an Arduino Uno / ATmega328P.
+**With avr-gcc (Linux, macOS, WSL):**
+
+```sh
+sudo apt install gcc-avr avr-libc binutils-avr   # Debian/Ubuntu
+make            # build build/gpio_struct.hex
+make flash      # flash to an Arduino Uno (PORT=/dev/ttyACM0 by default)
+```
+
+**With Microchip Studio (Atmel Studio 7):** open `gpio_struct.atsln`, build, and flash.
+
+Every push is built by GitHub Actions with warnings treated as errors.
 
 ## Background
 
